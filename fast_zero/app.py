@@ -26,13 +26,15 @@ def a2():
 @app.get(
     '/users/{user_id}', status_code=HTTPStatus.OK, response_model=UserPublic
 )
-def read_user(user_id: int):
-    if user_id < 1 or user_id > len(database):
+def read_user(user_id: int, session: Session = Depends(get_session)):
+    db_user = session.scalar(select(User).where(User.id == user_id))
+
+    if not db_user:
         raise HTTPException(
-            detail=f'{user_id=} not found', status_code=HTTPStatus.NOT_FOUND
+            detail='User not found', status_code=HTTPStatus.NOT_FOUND
         )
 
-    return database[user_id - 1]
+    return db_user
 
 
 @app.get('/users/', status_code=HTTPStatus.OK, response_model=UserList)
