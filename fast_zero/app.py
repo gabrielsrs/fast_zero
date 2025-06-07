@@ -33,15 +33,17 @@ def a2():
 @app.get(
     '/users/{user_id}', status_code=HTTPStatus.OK, response_model=UserPublic
 )
-def read_user(user_id: int, session: Session = Depends(get_session)):
-    db_user = session.scalar(select(User).where(User.id == user_id))
-
-    if not db_user:
+def read_user(
+    user_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.id != user_id:
         raise HTTPException(
-            detail='User not found', status_code=HTTPStatus.NOT_FOUND
+            detail='Not enough permission', status_code=HTTPStatus.FORBIDDEN
         )
 
-    return db_user
+    return current_user
 
 
 @app.get(

@@ -92,9 +92,10 @@ def test_update_user(client, user, token):
     }
 
 
-def test_update_not_found_user_id(client):
+def test_update_another_user(client, user, token):
     response = client.put(
-        '/users/1',
+        f'/users/{user.id + 1}',
+        headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'angelico',
             'email': 'angelico@example.com',
@@ -102,12 +103,14 @@ def test_update_not_found_user_id(client):
         },
     )
 
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found'}
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {'detail': 'Not enough permission'}
 
 
-def test_read_user(client, user):
-    response = client.get('/users/1')
+def test_read_user(client, user, token):
+    response = client.get(
+        f'/users/{user.id}', headers={'Authorization': f'Bearer {token}'}
+    )
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
@@ -117,11 +120,14 @@ def test_read_user(client, user):
     }
 
 
-def test_read_not_found_user(client):
-    response = client.get('/users/1')
+def test_read_another_user(client, user, token):
+    response = client.get(
+        f'/users/{user.id + 1}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
 
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found'}
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {'detail': 'Not enough permission'}
 
 
 def test_delete_user(client, user, token):
@@ -133,11 +139,13 @@ def test_delete_user(client, user, token):
     assert response.json() == {'message': 'User deleted'}
 
 
-def test_delete_not_found_user(client):
-    response = client.delete('/users/1')
+def test_delete_another_user(client, user, token):
+    response = client.delete(
+        f'/users/{user.id + 1}', headers={'Authorization': f'Bearer {token}'}
+    )
 
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found'}
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {'detail': 'Not enough permission'}
 
 
 def test_update_integrity_error(client, user, token):
