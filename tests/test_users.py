@@ -25,7 +25,7 @@ def test_create_user_with_same_username(client, user):
     response = client.post(
         '/users/',
         json={
-            'username': 'alice',
+            'username': user.username,
             'email': 'alice@example.com',
             'password': 'alice@123',
         },
@@ -40,7 +40,7 @@ def test_create_user_with_same_email(client, user):
         '/users/',
         json={
             'username': 'bob',
-            'email': 'alice@example.com',
+            'email': user.email,
             'password': 'alice@123',
         },
     )
@@ -78,9 +78,9 @@ def test_update_user(client, user, token):
     }
 
 
-def test_update_another_user(client, user, token):
+def test_update_another_user(client, other_user, token):
     response = client.put(
-        f'/users/{user.id + 1}',
+        f'/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'angelico',
@@ -101,14 +101,14 @@ def test_read_user(client, user, token):
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
         'id': 1,
-        'username': 'alice',
-        'email': 'alice@example.com',
+        'username': user.username,
+        'email': user.email,
     }
 
 
-def test_read_another_user(client, user, token):
+def test_read_another_user(client, other_user, token):
     response = client.get(
-        f'/users/{user.id + 1}',
+        f'/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
 
@@ -125,31 +125,22 @@ def test_delete_user(client, user, token):
     assert response.json() == {'message': 'User deleted'}
 
 
-def test_delete_another_user(client, user, token):
+def test_delete_another_user(client, other_user, token):
     response = client.delete(
-        f'/users/{user.id + 1}', headers={'Authorization': f'Bearer {token}'}
+        f'/users/{other_user.id}', headers={'Authorization': f'Bearer {token}'}
     )
 
     assert response.status_code == HTTPStatus.FORBIDDEN
     assert response.json() == {'detail': 'Not enough permission'}
 
 
-def test_update_integrity_error(client, user, token):
-    client.post(
-        '/users',
-        json={
-            'username': 'Jhon Doe',
-            'email': 'jhon@email.com',
-            'password': 'jhon@123',
-        },
-    )
-
+def test_update_integrity_error(client, user, other_user, token):
     response = client.put(
         f'users/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
-            'username': 'Jhon Doe',
-            'email': 'jhon@email.com',
+            'username': other_user.username,
+            'email': other_user.email,
             'password': 'jhon@123',
         },
     )
