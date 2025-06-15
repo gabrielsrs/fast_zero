@@ -17,23 +17,26 @@ class TodoFactory(factory.Factory):
     user_id = 1
 
 
-def test_create_todo(client, token):
-    response = client.post(
-        '/todos/',
-        headers={'Authorization': f'Bearer {token}'},
-        json={
+def test_create_todo(client, token, mock_db_time):
+    with mock_db_time(model=Todo) as time:
+        response = client.post(
+            '/todos/',
+            headers={'Authorization': f'Bearer {token}'},
+            json={
+                'title': 'Test todo',
+                'description': 'Test todo description',
+                'state': 'draft',
+            },
+        )
+
+        assert response.json() == {
+            'id': 1,
             'title': 'Test todo',
             'description': 'Test todo description',
             'state': 'draft',
-        },
-    )
-
-    assert response.json() == {
-        'id': 1,
-        'title': 'Test todo',
-        'description': 'Test todo description',
-        'state': 'draft',
-    }
+            'updated_at': time.isoformat(),
+            'created_at': time.isoformat(),
+        }
 
 
 @pytest.mark.asyncio
@@ -48,6 +51,30 @@ async def test_list_todos_should_return_5_todos(session, client, user, token):
     )
 
     assert len(response.json()['todos']) == expected_todos
+
+
+@pytest.mark.asyncio
+async def test_get_one_todo(session, client, user, token, mock_db_time):
+    with mock_db_time(model=Todo) as time:
+        todo = TodoFactory(user_id=user.id)
+        session.add(todo)
+        await session.commit()
+
+        response = client.get(
+            '/todos/',
+            headers={'Authorization': f'Bearer {token}'},
+        )
+
+        assert response.json()['todos'] == [
+            {
+                'id': 1,
+                'title': todo.title,
+                'description': todo.description,
+                'state': todo.state,
+                'updated_at': time.isoformat(),
+                'created_at': time.isoformat(),
+            }
+        ]
 
 
 @pytest.mark.asyncio

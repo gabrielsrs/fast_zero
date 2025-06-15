@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from fast_zero.models import TodoState
@@ -58,6 +60,8 @@ class TodoSchema(BaseModel):
 
 class TodoPublic(TodoSchema):
     id: int
+    updated_at: datetime
+    created_at: datetime
 
 
 class TodoList(BaseModel):
