@@ -1,7 +1,9 @@
 from dataclasses import asdict
 
 import pytest
+from psycopg.errors import InvalidTextRepresentation
 from sqlalchemy import select
+from sqlalchemy.exc import DataError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fast_zero.models import User
@@ -36,9 +38,8 @@ async def test_value_out_of_state_values(session: AsyncSession, user):
     todo = TodoFactory(user_id=user.id, state='Test')
 
     session.add(todo)
-    await session.commit()
 
-    with pytest.raises(LookupError) as error:
-        await session.refresh(todo)
+    with pytest.raises(DataError) as excinfo:
+        await session.commit()
 
-    assert error.type is LookupError
+    assert isinstance(excinfo.value.__cause__, InvalidTextRepresentation)
